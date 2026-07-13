@@ -1,0 +1,6 @@
+# Copy to local.properties (gitignored) and fill in. Android Studio also writes sdk.dir here
+# automatically the first time you open the project.
+sdk.dir=/path/to/Android/sdk
+
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your-anon-key

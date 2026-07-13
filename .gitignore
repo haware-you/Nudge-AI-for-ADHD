@@ -1,0 +1,34 @@
+# Android / Gradle
+*.iml
+.gradle/
+local.properties
+.idea/
+.DS_Store
+/build/
+/captures/
+.externalNativeBuild/
+.cxx/
+*.apk
+*.aab
+*.ap_
+*.dex
+/app/build/
+/app/release/
+/app/debug/
+
+# Keystore / secrets — never commit signing keys or API keys
+*.jks
+*.keystore
+*.env
+.env.local
+secrets.properties
+
+# Node / Supabase Edge Functions
+node_modules/
+npm-debug.log*
+supabase/.branches/
+supabase/.temp/
+
+# Misc
+*.log
+.venv/

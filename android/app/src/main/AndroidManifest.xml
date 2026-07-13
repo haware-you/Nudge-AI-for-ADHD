@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Permission list is deliberately short. Do not add ACCESSIBILITY_SERVICE, QUERY_ALL_PACKAGES,
+  or any background-location/usage-access permission — CLAUDE.md and PRD §5/§7 make these
+  permanent guardrails, not phase deferrals.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- Only requested at runtime if the user opts into the (off-by-default) daily notification. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <application
+        android:name=".NudgeApplication"
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:theme="@style/Theme.Nudge"
+        android:supportsRtl="true">
+
+        <activity
+            android:name=".ui.MainActivity"
+            android:exported="true"
+            android:theme="@style/Theme.Nudge">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!--
+          Launched directly from the widget's capture button and from MainActivity's own
+          capture entry point. Its own task so a widget tap doesn't background whatever app
+          the user was already in longer than necessary (PRD: "capture reachable in <=2 taps
+          from any state").
+        -->
+        <activity
+            android:name=".capture.CaptureActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Nudge.Capture"
+            android:excludeFromRecents="true"
+            android:launchMode="singleTask" />
+
+        <receiver
+            android:name=".widget.NextActionWidgetReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/next_action_widget_info" />
+        </receiver>
+
+    </application>
+
+</manifest>

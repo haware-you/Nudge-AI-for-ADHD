@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Compose owns the real M3 theme (ui/theme/Theme.kt, with dynamic color + dark mode);
+         this is only the manifest-level placeholder theme Android needs before Compose loads. -->
+    <style name="Theme.Nudge" parent="android:Theme.Material.Light.NoActionBar" />
+
+    <!-- CaptureActivity opens as a lightweight overlay (widget tap -> recording in <1.5s,
+         per M1) rather than a full app launch. -->
+    <style name="Theme.Nudge.Capture" parent="Theme.Nudge">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowAnimationStyle">@null</item>
+    </style>
+</resources>

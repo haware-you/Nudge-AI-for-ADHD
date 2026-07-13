@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Every user-facing string lives here so the shame-free copy audit (PRD M4 acceptance
+  criteria: "copy audit checklist applied to every screen before release") has one place to
+  check. Rules: no exclamation marks, no "you haven't..." constructions, no guilt/scolding
+  phrasing, no red-for-overdue (overdue is not a state this product has).
+-->
+<resources>
+    <string name="app_name">Nudge</string>
+
+    <!-- Widget: Next Action (M3) -->
+    <string name="widget_action_done">Done</string>
+    <string name="widget_action_not_today">Not today</string>
+    <string name="widget_empty_state_title">Nothing waiting</string>
+    <string name="widget_empty_state_body">Tap to capture something new.</string>
+    <string name="widget_low_battery_empty_title">Nothing light left</string>
+    <string name="widget_low_battery_empty_body">Rest counts.</string>
+    <string name="widget_low_battery_toggle">Low battery mode</string>
+    <string name="widget_capture_cta">Capture</string>
+
+    <!-- Capture flow (M1) -->
+    <string name="capture_recording">Listening</string>
+    <string name="capture_tap_to_stop">Tap to stop</string>
+    <string name="capture_processing">Captured — still thinking</string>
+    <string name="capture_time_limit_warning">30 seconds left in this memo</string>
+    <string name="capture_permission_denied_title">Microphone access needed</string>
+    <string name="capture_permission_denied_body">Nudge only listens while you\'re holding down capture. Turn on microphone access to record a memo.</string>
+    <string name="capture_permission_denied_action">Open settings</string>
+    <string name="capture_stuck_notice">One memo needs another look — it\'s saved and waiting.</string>
+
+    <!-- Review & Correct (M5) -->
+    <string name="review_title">Review</string>
+    <string name="review_empty">Nothing to review right now.</string>
+    <string name="review_low_confidence_badge">Confirm this one</string>
+    <string name="review_source_label">From this memo</string>
+    <string name="review_delete_action">Delete</string>
+    <string name="review_merged_from_label">Merged with an earlier memo</string>
+
+    <!-- Return-after-absence (M4 / Open Decision 1) -->
+    <string name="welcome_back_title">Welcome back</string>
+    <string name="welcome_back_body">Here\'s one thing, whenever you\'re ready.</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_title">Speak it and forget it</string>
+    <string name="onboarding_body">Ramble into the widget. Nudge sorts it out and hands back one small step at a time.</string>
+    <string name="onboarding_mic_cta">Try a first capture</string>
+    <string name="onboarding_skip">Skip for now</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_retain_transcript">Keep transcripts</string>
+    <string name="settings_retain_transcript_body">Off deletes each memo\'s text after tasks are extracted.</string>
+    <string name="settings_low_battery_mode">Low battery mode</string>
+    <string name="settings_low_battery_mode_body">Only show easy tasks in the widget.</string>
+    <string name="settings_notifications">Daily reminder</string>
+    <string name="settings_notifications_body">At most one a day. Off by default.</string>
+    <string name="settings_delete_account">Delete account</string>
+</resources>
