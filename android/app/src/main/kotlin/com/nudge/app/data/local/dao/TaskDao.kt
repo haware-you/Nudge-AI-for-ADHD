@@ -47,6 +47,9 @@ interface TaskDao {
     @Query("SELECT * FROM tasks WHERE id = :id")
     suspend fun getById(id: String): TaskEntity?
 
+    @Query("SELECT id FROM tasks WHERE status = 'OPEN'")
+    suspend fun getOpenTaskIds(): List<String>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertAll(tasks: List<TaskEntity>)
 
@@ -55,4 +58,7 @@ interface TaskDao {
 
     @Query("DELETE FROM tasks WHERE id = :id")
     suspend fun delete(id: String)
+
+    @Query("DELETE FROM tasks WHERE status = 'OPEN'")
+    suspend fun deleteAllOpen()
 }

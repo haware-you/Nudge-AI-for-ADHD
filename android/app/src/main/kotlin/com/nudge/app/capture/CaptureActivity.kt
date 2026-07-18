@@ -45,7 +45,15 @@ class CaptureActivity : ComponentActivity() {
     private val requestMicPermission = registerForActivityResult(
         ActivityResultContracts.RequestPermission(),
     ) { granted ->
-        if (granted) viewModel.startRecording() else viewModel.onPermissionDenied()
+        if (granted) {
+            // Lets a caller launching this via startActivityForResult (onboarding's sample
+            // capture, Flow A) tell "recording was attempted" apart from "permission denied,
+            // user backed out" — RESULT_CANCELED stays the default for the latter.
+            setResult(RESULT_OK)
+            viewModel.startRecording()
+        } else {
+            viewModel.onPermissionDenied()
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

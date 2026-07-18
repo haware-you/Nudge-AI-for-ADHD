@@ -60,6 +60,20 @@ class TaskRepository(private val taskDao: TaskDao) {
         }
     }
 
+    /**
+     * Flow E's "clear the old stuff instead" — a fresh start after a long absence, deliberately
+     * a hard delete rather than a bulk-skip: skipped tasks would still show up in Review (M5),
+     * which would defeat the "instant, unceremonious" framing (PRD Flow E / Open Decision 1).
+     */
+    suspend fun clearAllOpenTasks() {
+        val openIds = taskDao.getOpenTaskIds()
+        if (openIds.isEmpty()) return
+        taskDao.deleteAllOpen()
+        SupabaseClientProvider.client.postgrest.from("tasks").delete {
+            filter { isIn("id", openIds) }
+        }
+    }
+
     /** Pulls the user's open/skipped tasks down from Postgrest and reconciles local rows. */
     suspend fun syncDown() {
         val remoteTasks = SupabaseClientProvider.client.postgrest.from("tasks")

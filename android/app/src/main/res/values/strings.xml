@@ -18,6 +18,12 @@
     <string name="widget_low_battery_toggle">Low battery mode</string>
     <string name="widget_capture_cta">Capture</string>
 
+    <!-- Task effort — shared between the widget's low-battery toggle context, Review, and
+         Welcome Back; one label set so all three surfaces read identically. -->
+    <string name="task_effort_low">low effort</string>
+    <string name="task_effort_medium">medium effort</string>
+    <string name="task_effort_high">high effort</string>
+
     <!-- Capture flow (M1) -->
     <string name="capture_recording">Listening</string>
     <string name="capture_tap_to_stop">Tap to stop</string>
@@ -34,17 +40,32 @@
     <string name="review_low_confidence_badge">Confirm this one</string>
     <string name="review_source_label">From this memo</string>
     <string name="review_delete_action">Delete</string>
-    <string name="review_merged_from_label">Merged with an earlier memo</string>
+    <plurals name="review_merged_from_count">
+        <item quantity="one">Merged from %1$d other memo</item>
+        <item quantity="other">Merged from %1$d other memos</item>
+    </plurals>
+    <!-- Prefixes a venting/journaling memo that produced no tasks (M2: "the AI must never
+         fabricate a task") — kept verbatim, never promoted into a task automatically. -->
+    <string name="review_note_prefix">Note (no tasks)</string>
 
     <!-- Return-after-absence (M4 / Open Decision 1) -->
     <string name="welcome_back_title">Welcome back</string>
     <string name="welcome_back_body">Here\'s one thing, whenever you\'re ready.</string>
+    <string name="welcome_back_accept_cta">I\'ll do this one</string>
+    <string name="welcome_back_clear_cta">Clear the old stuff instead</string>
+    <string name="welcome_back_continue_cta">Continue</string>
 
     <!-- Onboarding -->
     <string name="onboarding_title">Speak it and forget it</string>
     <string name="onboarding_body">Ramble into the widget. Nudge sorts it out and hands back one small step at a time.</string>
     <string name="onboarding_mic_cta">Try a first capture</string>
     <string name="onboarding_skip">Skip for now</string>
+
+    <!-- Onboarding: widget-pin prompt, shown right after the sample capture (Flow A) -->
+    <string name="onboarding_widget_prompt_title">Add the widget</string>
+    <string name="onboarding_widget_prompt_body">The widget is the fastest way in — one tap from your home screen, no app to open.</string>
+    <string name="onboarding_widget_prompt_cta">Add to home screen</string>
+    <string name="onboarding_widget_prompt_skip">Maybe later</string>
 
     <!-- Settings -->
     <string name="settings_title">Settings</string>

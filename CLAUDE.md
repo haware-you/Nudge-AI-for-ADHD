@@ -14,31 +14,59 @@ Function invocation. Treat this as a structurally-complete first draft that need
 contact with Android Studio and a real Supabase project, not as tested code.
 
 **What's actually been verified:** the deterministic priority-scoring logic
-(`android/app/src/main/kotlin/com/nudge/app/data/PriorityScore.kt`) is pure Kotlin with no
-Android dependency, so it was compiled and unit-tested for real in a throwaway JVM sandbox
-before being committed (test lives at
-`android/app/src/test/kotlin/com/nudge/app/data/PriorityScoreTest.kt`). Everything else —
-Gradle config, Room, Glance, WorkManager, the supabase-kt client calls, the Edge Function — is
-unverified by a compiler.
+(`android/app/src/main/kotlin/com/nudge/app/data/PriorityScore.kt`) and the return-after-absence
+gate (`android/app/src/main/kotlin/com/nudge/app/data/AbsenceGate.kt`) are pure Kotlin with no
+Android dependency, so both were compiled and unit-tested for real in a throwaway JVM sandbox
+before being committed (tests live at
+`android/app/src/test/kotlin/com/nudge/app/data/PriorityScoreTest.kt` and
+`AbsenceGateTest.kt`). Everything else — Gradle config, Room, Glance, WorkManager, the
+supabase-kt client calls, the Edge Function — is unverified by a compiler.
+
+**Since the original scaffold, the "Nudge User Flows" design doc (`docs/prd.md`'s flows A–F)
+has been implemented more fully:**
+- Flow E (return after absence) was entirely unbuilt despite having placeholder strings — it now
+  exists end-to-end: `NudgePreferences.lastOpenedAt`/`recordAppOpened()`, `AbsenceGate`,
+  `returning/WelcomeBackScreen.kt` + `WelcomeBackViewModel.kt`, wired into `MainActivity`'s
+  startup step machine. "Clear the old stuff instead" hard-deletes open tasks
+  (`TaskRepository.clearAllOpenTasks()`) rather than bulk-skipping them, so they actually leave
+  Review too.
+- Flow A's last step (sample capture → prompt to add the widget) is now wired up:
+  `CaptureActivity` reports back via activity result whether recording was actually attempted
+  (permission granted) vs. the user backing out of a denied prompt, and `onboarding/
+  WidgetPromptScreen.kt` fires `AppWidgetManager.requestPinAppWidget` — best-effort, since not
+  every launcher supports it and there's no reliable callback for whether the user completed
+  the placement.
+- Gap #3 from the previous version of this list ("dedup-merge visibility in Review isn't wired
+  up") is closed: `NoteEntity`/`DedupMergeEntity` + DAOs mirror the `notes`/`dedup_merges`
+  tables locally, `ReviewRepository` pulls them down alongside `TaskRepository.syncDown()`, and
+  `ReviewScreen` now shows a "merged from N memos" badge and renders notes (dashed-border,
+  italic — the M2 "never fabricate a task" case). This bumped `NudgeDatabase` to version 2 with
+  `fallbackToDestructiveMigration()`, which is fine pre-launch but will need a real migration
+  once anyone has actually installed this.
+- `MainScaffold` had no in-app capture entry point at all (only the widget and the one-time
+  onboarding CTA reached `CaptureActivity`), despite the design doc's Flow Overview listing
+  "in-app capture button (≤2 taps from any state)" as a standing entry point — it now has a FAB.
+
+None of the above has been through a Gradle sync either — same caveat as the rest of this list.
 
 **Known gaps to close before this is a real MVP, roughly in order:**
 1. Open `android/` in Android Studio and fix whatever the first Gradle sync surfaces —
    supabase-kt's exact API shape (`SupabaseClientProvider.kt`, `TaskRepository.kt`,
    `CaptureRepository.kt`, `NudgePreferences.kt` all carry a note about this) is the most likely
-   source of compile errors, since its DSL has shifted across major versions.
+   source of compile errors, since its DSL has shifted across major versions. The `isIn(...)`
+   filter added in `TaskRepository.clearAllOpenTasks()` and the bare `.select(columns =
+   Columns.ALL)` calls in `ReviewRepository` carry the same unverified-API-shape risk.
 2. Stand up a real Supabase project, run the `supabase/migrations/`, deploy `process-memo` with
    real STT/Anthropic/Voyage API keys, and run the PRD's own Week 1 exit criteria: process ~15
    real rambling memos (EN + mixed EN/ID) and subjectively check extraction quality and
    per-memo cost before building anything further on top of it.
-3. Dedup-merge visibility in the Review screen (M2: "merge visible in review history") isn't
-   wired up yet — `dedup_merges` exists server-side but nothing on the client reads it.
-4. Instrumented tests for the M1 edge cases (permission-denied, offline queue, call
-   interruption) don't exist yet — only the one pure-logic unit test above does.
-5. The daily notification (M4: "max one push/day, off by default") has a toggle in Settings but
+3. Instrumented tests for the M1 edge cases (permission-denied, offline queue, call
+   interruption) don't exist yet — only the pure-logic unit tests above do.
+4. The daily notification (M4: "max one push/day, off by default") has a toggle in Settings but
    no actual scheduling behind it yet.
-6. `usage_daily.estimated_cost_usd` is never populated — the COGS KPI has no real numbers behind
+5. `usage_daily.estimated_cost_usd` is never populated — the COGS KPI has no real numbers behind
    it until token/second-based cost accounting is added to `process-memo`.
-7. No real app icon/brand palette — placeholder shapes and a neutral color only.
+6. No real app icon/brand palette — placeholder shapes and a neutral color only.
 
 This document is derived from §4–§8 of the PRD per its own instruction (§12, "Development
 handoff"). Treat the PRD (`docs/prd.md`) as the source of truth; this file is a distilled,

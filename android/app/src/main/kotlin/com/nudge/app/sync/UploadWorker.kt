@@ -40,6 +40,7 @@ class UploadWorker(context: Context, params: WorkerParameters) : CoroutineWorker
             ServiceLocator.captureRepository.uploadAndProcess(memo)
             ServiceLocator.captureRepository.markUploadState(memoId, MemoUploadState.DONE)
             ServiceLocator.taskRepository.syncDown()
+            ServiceLocator.reviewRepository.syncDown()
             NextActionWidget().updateAll(applicationContext)
             Result.success()
         } catch (e: Exception) {

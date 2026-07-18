@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.nudge.app.data.remote.SupabaseClientProvider
 import io.github.jan.supabase.auth.auth
@@ -26,6 +27,7 @@ class NudgePreferences(private val context: Context) {
         val NOTIFICATIONS_ENABLED = booleanPreferencesKey("notifications_enabled")
         val NOTIFICATION_HOUR = intPreferencesKey("notification_hour")
         val ONBOARDING_COMPLETE = booleanPreferencesKey("onboarding_complete")
+        val LAST_OPENED_AT = longPreferencesKey("last_opened_at")
     }
 
     val onboardingComplete: Flow<Boolean> =
@@ -34,6 +36,22 @@ class NudgePreferences(private val context: Context) {
     /** Local-only, never synced — onboarding is a per-device first-run gate, not account state. */
     suspend fun setOnboardingComplete(value: Boolean) {
         context.dataStore.edit { it[Keys.ONBOARDING_COMPLETE] = value }
+    }
+
+    /** 0L means "never recorded" — see [com.nudge.app.data.AbsenceGate]. Local-only: absence is
+     * measured per-device, not as account state that would need to survive a reinstall. */
+    val lastOpenedAt: Flow<Long> =
+        context.dataStore.data.map { it[Keys.LAST_OPENED_AT] ?: 0L }
+
+    /** Reads the previous value and overwrites it with [nowMillis] in one shot, so callers get
+     * an atomic "how long were they away, and reset the clock" without a read-then-write race. */
+    suspend fun recordAppOpened(nowMillis: Long = System.currentTimeMillis()): Long {
+        var previous = 0L
+        context.dataStore.edit { prefs ->
+            previous = prefs[Keys.LAST_OPENED_AT] ?: 0L
+            prefs[Keys.LAST_OPENED_AT] = nowMillis
+        }
+        return previous
     }
 
     val retainTranscript: Flow<Boolean> =
