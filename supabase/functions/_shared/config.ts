@@ -1,3 +1,5 @@
+import { parsePrice } from "../process-memo/cost.ts";
+
 // Central place to read env vars so a missing one fails fast and loud at request time,
 // rather than as a confusing null deep in a pipeline stage.
 function required(name: string): string {
@@ -30,4 +32,27 @@ export const config = {
 
   freeDailyCaptureLimit: Number(Deno.env.get("FREE_DAILY_CAPTURE_LIMIT") ?? "5"),
   dedupSimilarityThreshold: Number(Deno.env.get("DEDUP_SIMILARITY_THRESHOLD") ?? "0.86"),
+
+  // Unit prices for per-memo cost accounting (process-memo/cost.ts). Intentionally no
+  // defaults: look up current pricing for whichever providers/models you configured above.
+  // Any unset price makes memos.estimated_cost_usd null ("unknown") instead of a fake number.
+  prices: {
+    sttUsdPerMinute: parsePrice("PRICE_STT_USD_PER_MINUTE", Deno.env.get("PRICE_STT_USD_PER_MINUTE")),
+    llmInputUsdPerMTok: parsePrice(
+      "PRICE_LLM_INPUT_USD_PER_MTOK",
+      Deno.env.get("PRICE_LLM_INPUT_USD_PER_MTOK"),
+    ),
+    llmOutputUsdPerMTok: parsePrice(
+      "PRICE_LLM_OUTPUT_USD_PER_MTOK",
+      Deno.env.get("PRICE_LLM_OUTPUT_USD_PER_MTOK"),
+    ),
+    embeddingUsdPerMTok: parsePrice(
+      "PRICE_EMBEDDING_USD_PER_MTOK",
+      Deno.env.get("PRICE_EMBEDDING_USD_PER_MTOK"),
+    ),
+  },
+
+  // Per-user daily spend kill switch (PRD §7, R4). Unset = disabled. Only effective once the
+  // PRICE_* vars are set, since spend is summed from estimated_cost_usd.
+  dailySpendLimitUsd: parsePrice("DAILY_SPEND_LIMIT_USD", Deno.env.get("DAILY_SPEND_LIMIT_USD")),
 };

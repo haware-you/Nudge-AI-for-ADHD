@@ -41,7 +41,10 @@ class TaskRepository(private val taskDao: TaskDao) {
             task.copy(
                 skipCount = newSkipCount,
                 updatedAt = now,
-                priorityScore = PriorityScore.compute(task.effort, now, newSkipCount, now),
+                // Recency comes from lastMentionedAt, NOT now: using now here made a skip reset
+                // recency to "fresh", which outweighed the skip penalty and sent the skipped
+                // task straight back to the top of the widget.
+                priorityScore = PriorityScore.compute(task.effort, task.lastMentionedAt, newSkipCount, now),
                 pendingSync = true,
             ),
         )
@@ -107,5 +110,6 @@ private fun TaskDto.toEntity(): TaskEntity = TaskEntity(
     priorityScore = priorityScore,
     createdAt = Instant.parse(createdAt).toEpochMilliseconds(),
     updatedAt = Instant.parse(updatedAt).toEpochMilliseconds(),
+    lastMentionedAt = Instant.parse(lastMentionedAt).toEpochMilliseconds(),
     pendingSync = false,
 )

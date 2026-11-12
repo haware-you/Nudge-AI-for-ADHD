@@ -58,7 +58,17 @@ const EXTRACTION_TOOL = {
   },
 };
 
-async function callClaude(transcript: string, correctionNote?: string): Promise<unknown> {
+export interface LlmUsage {
+  inputTokens: number;
+  outputTokens: number;
+  calls: number;
+}
+
+async function callClaude(
+  transcript: string,
+  usage: LlmUsage,
+  correctionNote?: string,
+): Promise<unknown> {
   const userContent = correctionNote
     ? `${correctionNote}\n\nTranscript:\n${transcript}`
     : `Transcript:\n${transcript}`;
@@ -86,6 +96,10 @@ async function callClaude(transcript: string, correctionNote?: string): Promise<
   }
 
   const data = await response.json();
+  // Count every billed call, including the retry — the retry is a real cost.
+  usage.calls += 1;
+  usage.inputTokens += Number(data.usage?.input_tokens ?? 0);
+  usage.outputTokens += Number(data.usage?.output_tokens ?? 0);
   const toolUse = data.content?.find((block: { type: string }) => block.type === "tool_use");
   return toolUse?.input;
 }
@@ -95,11 +109,15 @@ async function callClaude(transcript: string, correctionNote?: string): Promise<
  * fail safe to the raw transcript rather than fabricate or crash — per CLAUDE.md: "malformed
  * output -> one retry -> fail safe to raw transcript."
  */
-export async function extractTasks(transcript: string): Promise<ExtractionResult | null> {
+export async function extractTasks(
+  transcript: string,
+  usage: LlmUsage,
+): Promise<ExtractionResult | null> {
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
       const raw = await callClaude(
         transcript,
+        usage,
         attempt === 0
           ? undefined
           : "Your previous response did not match the required schema exactly. " +

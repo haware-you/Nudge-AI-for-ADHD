@@ -6,7 +6,7 @@ import { config } from "../_shared/config.ts";
 // real rambling memos in the Week 1 spike per the roadmap; if quality is insufficient, swap
 // STT_API_URL/STT_MODEL to a different multilingual provider without touching callers.
 export async function transcribeAudio(
-  audioBytes: Uint8Array,
+  audioBytes: Uint8Array<ArrayBuffer>,
   mimeType: string,
 ): Promise<string> {
   const form = new FormData();

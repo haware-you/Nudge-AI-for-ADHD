@@ -12,7 +12,8 @@ const EFFORT_WEIGHT: Record<Effort, number> = {
   high: 0.3,
 };
 
-const RECENCY_HALF_LIFE_HOURS = 72;
+// Time constant of the exp(-t/τ) decay, not a half-life (the half-life is τ·ln2 ≈ 50h).
+const RECENCY_DECAY_HOURS = 72;
 const SKIP_PENALTY_PER_SKIP = 0.15;
 const SKIP_PENALTY_CAP = 0.6; // a skipped task is deprioritized, never effectively buried forever
 
@@ -22,13 +23,15 @@ const SKIP_COMPONENT_WEIGHT = 0.2;
 
 export interface ScorableTask {
   effort: Effort;
-  updatedAt: Date;
+  // When the user last *said* this task (creation or dedup merge) — never skip/score updates.
+  // See supabase/migrations/0004_recency_and_cost.sql for why this isn't updated_at.
+  lastMentionedAt: Date;
   skipCount: number;
 }
 
 export function computePriorityScore(task: ScorableTask, now: Date = new Date()): number {
-  const ageHours = Math.max(0, (now.getTime() - task.updatedAt.getTime()) / 36e5);
-  const recencyWeight = Math.exp(-ageHours / RECENCY_HALF_LIFE_HOURS);
+  const ageHours = Math.max(0, (now.getTime() - task.lastMentionedAt.getTime()) / 36e5);
+  const recencyWeight = Math.exp(-ageHours / RECENCY_DECAY_HOURS);
   const skipPenalty = Math.min(task.skipCount * SKIP_PENALTY_PER_SKIP, SKIP_PENALTY_CAP);
 
   return (

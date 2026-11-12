@@ -13,16 +13,17 @@ import kotlin.math.min
  */
 object PriorityScore {
     private val effortWeight = mapOf(Effort.LOW to 1.0, Effort.MEDIUM to 0.6, Effort.HIGH to 0.3)
-    private const val RECENCY_HALF_LIFE_HOURS = 72.0
+    // Time constant of exp(-t/τ), not a half-life (half-life = τ·ln2 ≈ 50h). Mirrors score.ts.
+    private const val RECENCY_DECAY_HOURS = 72.0
     private const val SKIP_PENALTY_PER_SKIP = 0.15
     private const val SKIP_PENALTY_CAP = 0.6
     private const val EFFORT_COMPONENT_WEIGHT = 0.5
     private const val RECENCY_COMPONENT_WEIGHT = 0.3
     private const val SKIP_COMPONENT_WEIGHT = 0.2
 
-    fun compute(effort: Effort, updatedAtMillis: Long, skipCount: Int, nowMillis: Long = System.currentTimeMillis()): Double {
-        val ageHours = (nowMillis - updatedAtMillis).coerceAtLeast(0).toDouble() / 3_600_000.0
-        val recencyWeight = exp(-ageHours / RECENCY_HALF_LIFE_HOURS)
+    fun compute(effort: Effort, lastMentionedAtMillis: Long, skipCount: Int, nowMillis: Long = System.currentTimeMillis()): Double {
+        val ageHours = (nowMillis - lastMentionedAtMillis).coerceAtLeast(0).toDouble() / 3_600_000.0
+        val recencyWeight = exp(-ageHours / RECENCY_DECAY_HOURS)
         val skipPenalty = min(skipCount * SKIP_PENALTY_PER_SKIP, SKIP_PENALTY_CAP)
 
         return EFFORT_COMPONENT_WEIGHT * (effortWeight[effort] ?: 0.6) +

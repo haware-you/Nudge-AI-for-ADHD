@@ -13,7 +13,9 @@ Gradle Plugin Portal were reachable), so there was no way to verify a Gradle syn
 Function invocation. Treat this as a structurally-complete first draft that needs to survive
 contact with Android Studio and a real Supabase project, not as tested code.
 
-**What's actually been verified:** the deterministic priority-scoring logic
+**What's actually been verified:** `process-memo` passes `deno check` and `cost_test.ts`
+passes under `deno test` (Deno installed from npm; still never run against a live Supabase
+project or real APIs). Also: the deterministic priority-scoring logic
 (`android/app/src/main/kotlin/com/nudge/app/data/PriorityScore.kt`) is pure Kotlin with no
 Android dependency, so it was compiled and unit-tested for real in a throwaway JVM sandbox
 before being committed (test lives at
@@ -36,8 +38,13 @@ unverified by a compiler.
    interruption) don't exist yet — only the one pure-logic unit test above does.
 5. The daily notification (M4: "max one push/day, off by default") has a toggle in Settings but
    no actual scheduling behind it yet.
-6. `usage_daily.estimated_cost_usd` is never populated — the COGS KPI has no real numbers behind
-   it until token/second-based cost accounting is added to `process-memo`.
+6. Cost accounting is wired (`process-memo/cost.ts`, migration `0004`): each memo stores raw
+   usage units (STT seconds, LLM tokens/calls, embedding tokens) plus `estimated_cost_usd`.
+   The unit prices are `PRICE_*` env vars with no defaults, so cost stays null until someone
+   fills in current provider prices. STT seconds come from the client-reported
+   `duration_seconds`, so they are an estimate. Failed attempts are recorded on the memo but
+   not added to `usage_daily`, so the optional `DAILY_SPEND_LIMIT_USD` kill switch undercounts
+   failures.
 7. No real app icon/brand palette — placeholder shapes and a neutral color only.
 
 This document is derived from §4–§8 of the PRD per its own instruction (§12, "Development

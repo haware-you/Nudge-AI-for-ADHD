@@ -44,4 +44,14 @@ class PriorityScoreTest {
         val worstCase = PriorityScore.compute(Effort.LOW, now - 365L * 24 * 3_600_000L, 1000, now)
         assertTrue("expected > 0, got $worstCase", worstCase > 0)
     }
+
+    @Test
+    fun `Not Today never raises a task's score - regression for recency reset on skip`() {
+        // Before the fix, markSkipped passed `now` as the recency timestamp, so skipping a
+        // six-day-old task jumped its score from ~0.34 to ~0.57 and it reappeared at the top.
+        val sixDaysAgo = now - 6 * 24 * 3_600_000L
+        val before = PriorityScore.compute(Effort.MEDIUM, sixDaysAgo, 0, now)
+        val afterSkip = PriorityScore.compute(Effort.MEDIUM, sixDaysAgo, 1, now)
+        assertTrue("expected skip to lower score: before=$before after=$afterSkip", afterSkip < before)
+    }
 }

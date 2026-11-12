@@ -29,6 +29,9 @@ data class TaskEntity(
     val priorityScore: Double,
     val createdAt: Long,
     val updatedAt: Long,
+    // Recency input for PriorityScore: when the user last *said* this task (creation or a
+    // server-side dedup merge). Skips must not touch it — see 0004_recency_and_cost.sql.
+    val lastMentionedAt: Long,
     // True once a Done/Skip action has been applied optimistically here but not yet confirmed
     // synced to Supabase. TaskActionSyncWorker flushes rows where this is true.
     val pendingSync: Boolean = false,

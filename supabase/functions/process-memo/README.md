@@ -45,6 +45,7 @@ confirmed:
   `EXTRACTION_PROMPT_VERSION` if not.
 - `DEDUP_SIMILARITY_THRESHOLD` (0.86 default) merges genuine near-duplicates without
   over-merging — tune against real data, it's a guess.
-- Per-memo cost against the $0.15/user/month COGS target in `usage_daily.estimated_cost_usd`
-  (not yet populated by this code — add token/second-based cost accounting once you have real
-  provider pricing to compute against).
+- Per-memo cost against the $0.15/user/month COGS target. Fill in the `PRICE_*` vars in
+  `.env` with current prices for your configured models, then read `memos.estimated_cost_usd`
+  (and the raw `stt_seconds` / `llm_*_tokens` / `embedding_tokens` columns) per memo.
+  Cross-check the totals against the providers' own billing dashboards once.

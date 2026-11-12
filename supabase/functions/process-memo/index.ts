@@ -5,6 +5,7 @@ import { transcribeAudio } from "./transcribe.ts";
 import { extractTasks } from "./extract.ts";
 import { embedText, findDuplicate } from "./dedup.ts";
 import { computePriorityScore } from "./score.ts";
+import { emptyUsage, estimateCostUsd, MemoUsage } from "./cost.ts";
 import { LOW_CONFIDENCE_THRESHOLD } from "./types.ts";
 
 const MAX_RETRIES = 3;
@@ -81,7 +82,7 @@ Deno.serve(async (req) => {
   const today = new Date().toISOString().slice(0, 10);
   const { data: usage } = await db
     .from("usage_daily")
-    .select("capture_count")
+    .select("capture_count, estimated_cost_usd")
     .eq("user_id", userId)
     .eq("day", today)
     .maybeSingle();
@@ -90,7 +91,36 @@ Deno.serve(async (req) => {
     return json({ error: "daily_capture_limit_reached" }, 402);
   }
 
+  // Per-user daily spend kill switch (PRD §7, R4). Applies to every plan — it exists to
+  // contain abuse/bugs, not to upsell. Memo stays queued, so nothing captured is lost.
+  if (
+    config.dailySpendLimitUsd !== null &&
+    Number(usage?.estimated_cost_usd ?? 0) >= config.dailySpendLimitUsd
+  ) {
+    return json({ error: "daily_spend_limit_reached" }, 429);
+  }
+
   await db.from("memos").update({ status: "processing" }).eq("id", memoId);
+
+  const memoUsage: MemoUsage = emptyUsage();
+  // STT is billed on audio length. duration_seconds is client-reported (recorder timer), so
+  // treat it as an estimate; check it against the STT provider's dashboard in the Week 1 spike.
+  memoUsage.sttSeconds = Number(memo.duration_seconds ?? 0);
+  const llmUsage = { inputTokens: 0, outputTokens: 0, calls: 0 };
+
+  const usageColumns = () => {
+    memoUsage.llmInputTokens = llmUsage.inputTokens;
+    memoUsage.llmOutputTokens = llmUsage.outputTokens;
+    memoUsage.llmCalls = llmUsage.calls;
+    return {
+      stt_seconds: memoUsage.sttSeconds,
+      llm_input_tokens: memoUsage.llmInputTokens,
+      llm_output_tokens: memoUsage.llmOutputTokens,
+      llm_calls: memoUsage.llmCalls,
+      embedding_tokens: memoUsage.embeddingTokens,
+      estimated_cost_usd: estimateCostUsd(memoUsage, config.prices),
+    };
+  };
 
   try {
     if (!memo.audio_path) {
@@ -113,7 +143,7 @@ Deno.serve(async (req) => {
       .update({ status: "transcribed", transcript })
       .eq("id", memoId);
 
-    const extraction = await extractTasks(transcript);
+    const extraction = await extractTasks(transcript, llmUsage);
 
     if (!extraction) {
       // Fail-safe: never fabricate a task from output we couldn't validate. Preserve the
@@ -136,7 +166,8 @@ Deno.serve(async (req) => {
       );
 
       for (const task of extraction.tasks) {
-        const embedding = await embedText(task.text);
+        const { embedding, tokens } = await embedText(task.text);
+        memoUsage.embeddingTokens += tokens;
         const duplicate = findDuplicate(embedding, candidateEmbeddings);
 
         if (duplicate) {
@@ -147,8 +178,9 @@ Deno.serve(async (req) => {
             merged_source_memo_id: memoId,
             similarity: duplicate.similarity,
           });
-          // Touch the surviving task so recency-based scoring reflects the fresh mention.
-          await db.from("tasks").update({ updated_at: new Date().toISOString() }).eq(
+          // The user said it again: refresh the recency signal. Only creation and merges may
+          // write last_mentioned_at (see migrations/0004_recency_and_cost.sql).
+          await db.from("tasks").update({ last_mentioned_at: new Date().toISOString() }).eq(
             "id",
             duplicate.taskId,
           );
@@ -182,14 +214,14 @@ Deno.serve(async (req) => {
     // so it can run on every memo without threatening the COGS target.
     const { data: openTasksForScoring } = await db
       .from("tasks")
-      .select("id, effort, updated_at, skip_count")
+      .select("id, effort, last_mentioned_at, skip_count")
       .eq("user_id", userId)
       .eq("status", "open");
 
     for (const t of openTasksForScoring ?? []) {
       const priority_score = computePriorityScore({
         effort: t.effort,
-        updatedAt: new Date(t.updated_at),
+        lastMentionedAt: new Date(t.last_mentioned_at),
         skipCount: t.skip_count,
       });
       await db.from("tasks").update({ priority_score }).eq("id", t.id);
@@ -204,19 +236,21 @@ Deno.serve(async (req) => {
         processed_at: new Date().toISOString(),
         transcript: finalTranscript,
         audio_deleted_at: new Date().toISOString(),
+        ...usageColumns(),
       })
       .eq("id", memoId);
 
     await db.storage.from("audio").remove([memo.audio_path]);
 
-    await db.from("usage_daily").upsert(
-      {
-        user_id: userId,
-        day: today,
-        capture_count: (usage?.capture_count ?? 0) + 1,
-      },
-      { onConflict: "user_id,day" },
-    );
+    const { error: usageError } = await db.rpc("increment_usage_daily", {
+      p_user_id: userId,
+      p_day: today,
+      p_cost_usd: usageColumns().estimated_cost_usd,
+    });
+    if (usageError) {
+      // Usage accounting must not fail a memo the user already sees as processed.
+      console.error(`usage_daily increment failed for memo ${memoId}: ${usageError.message}`);
+    }
 
     return json({ memo_id: memoId, status: "done" });
   } catch (err) {
@@ -227,6 +261,9 @@ Deno.serve(async (req) => {
       .update({
         status: nextStatus,
         retry_count: retryCount,
+        // Failed attempts still cost money; record it so the Week 1 cost numbers aren't
+        // biased low. (Not added to usage_daily — known gap for the spend kill switch.)
+        ...usageColumns(),
         error: err instanceof Error ? err.message : String(err),
       })
       .eq("id", memoId);

@@ -1,6 +1,8 @@
 import { config } from "../_shared/config.ts";
 
-export async function embedText(text: string): Promise<number[]> {
+export async function embedText(
+  text: string,
+): Promise<{ embedding: number[]; tokens: number }> {
   const response = await fetch("https://api.voyageai.com/v1/embeddings", {
     method: "POST",
     headers: {
@@ -16,7 +18,11 @@ export async function embedText(text: string): Promise<number[]> {
   }
 
   const data = await response.json();
-  return data.data[0].embedding as number[];
+  return {
+    embedding: data.data[0].embedding as number[],
+    // Voyage reports usage.total_tokens; treated as 0 if a provider omits it.
+    tokens: Number(data.usage?.total_tokens ?? 0),
+  };
 }
 
 function cosineSimilarity(a: number[], b: number[]): number {
