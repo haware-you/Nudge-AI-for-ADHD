@@ -8,7 +8,7 @@ import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -17,6 +17,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -49,9 +50,10 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            NudgeTheme {
+            val preferences = ServiceLocator.preferences
+            val dynamicColor by preferences.dynamicColor.collectAsState(initial = false)
+            NudgeTheme(dynamicColor = dynamicColor) {
                 var showOnboarding by remember { mutableStateOf<Boolean?>(null) }
-                val preferences = ServiceLocator.preferences
 
                 LaunchedEffect(Unit) {
                     showOnboarding = !preferences.onboardingComplete.first()
@@ -87,7 +89,7 @@ private fun MainScaffold(reviewViewModel: ReviewViewModel, settingsViewModel: Se
                 NavigationBarItem(
                     selected = tab == Tab.REVIEW,
                     onClick = { tab = Tab.REVIEW },
-                    icon = { Icon(Icons.Filled.List, contentDescription = null) },
+                    icon = { Icon(Icons.AutoMirrored.Filled.List, contentDescription = null) },
                     label = { Text(stringResource(R.string.review_title)) },
                 )
                 NavigationBarItem(

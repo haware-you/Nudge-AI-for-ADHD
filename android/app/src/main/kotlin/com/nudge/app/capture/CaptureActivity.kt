@@ -9,13 +9,11 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -27,9 +25,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import com.nudge.app.R
+import com.nudge.app.ServiceLocator
+import com.nudge.app.ui.theme.Elevation
 import com.nudge.app.ui.theme.NudgeTheme
+import com.nudge.app.ui.theme.Spacing
 import kotlinx.coroutines.flow.collectLatest
 
 /**
@@ -54,7 +54,8 @@ class CaptureActivity : ComponentActivity() {
         requestMicPermission.launch(Manifest.permission.RECORD_AUDIO)
 
         setContent {
-            NudgeTheme {
+            val dynamicColor by ServiceLocator.preferences.dynamicColor.collectAsState(initial = false)
+            NudgeTheme(dynamicColor = dynamicColor) {
                 val state by viewModel.uiState.collectAsState()
                 LaunchedEffect(Unit) {
                     viewModel.captureFinished.collectLatest { finish() }
@@ -81,16 +82,20 @@ private fun CaptureScreen(
     onStop: () -> Unit,
     onOpenSettings: () -> Unit,
 ) {
+    // Idle is transient (not started yet, or just finished): render nothing at all rather than
+    // an empty sheet.
+    if (state == CaptureUiState.Idle) return
+
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
         Surface(
-            modifier = Modifier.padding(24.dp),
-            shape = RoundedCornerShape(28.dp),
-            tonalElevation = 6.dp,
+            modifier = Modifier.padding(Spacing.xl),
+            shape = MaterialTheme.shapes.extraLarge,
+            tonalElevation = Elevation.overlay,
         ) {
             Column(
-                modifier = Modifier.padding(24.dp),
+                modifier = Modifier.padding(Spacing.xl),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(Spacing.md),
             ) {
                 when (state) {
                     is CaptureUiState.Recording -> {
@@ -119,9 +124,7 @@ private fun CaptureScreen(
                             Text(stringResource(R.string.capture_permission_denied_action))
                         }
                     }
-                    CaptureUiState.Idle -> {
-                        // Transient: either not started yet or just finished; nothing to render.
-                    }
+                    CaptureUiState.Idle -> Unit // handled by the early return above
                 }
             }
         }

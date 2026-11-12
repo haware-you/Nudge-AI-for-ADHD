@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Dark counterpart of the pre-Compose placeholder theme, so a dark-mode launch does not
+         flash a light window before Compose draws. -->
+    <style name="Theme.Nudge" parent="android:Theme.Material.NoActionBar" />
+</resources>

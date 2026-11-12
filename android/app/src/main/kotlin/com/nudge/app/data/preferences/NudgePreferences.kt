@@ -26,6 +26,7 @@ class NudgePreferences(private val context: Context) {
         val NOTIFICATIONS_ENABLED = booleanPreferencesKey("notifications_enabled")
         val NOTIFICATION_HOUR = intPreferencesKey("notification_hour")
         val ONBOARDING_COMPLETE = booleanPreferencesKey("onboarding_complete")
+        val DYNAMIC_COLOR = booleanPreferencesKey("dynamic_color")
     }
 
     val onboardingComplete: Flow<Boolean> =
@@ -34,6 +35,15 @@ class NudgePreferences(private val context: Context) {
     /** Local-only, never synced — onboarding is a per-device first-run gate, not account state. */
     suspend fun setOnboardingComplete(value: Boolean) {
         context.dataStore.edit { it[Keys.ONBOARDING_COMPLETE] = value }
+    }
+
+    /** Off by default: the calm palette is the product's look; wallpaper colors are opt-in. */
+    val dynamicColor: Flow<Boolean> =
+        context.dataStore.data.map { it[Keys.DYNAMIC_COLOR] ?: false }
+
+    /** Local-only, never synced — a per-device display choice, not account state. */
+    suspend fun setDynamicColor(value: Boolean) {
+        context.dataStore.edit { it[Keys.DYNAMIC_COLOR] = value }
     }
 
     val retainTranscript: Flow<Boolean> =

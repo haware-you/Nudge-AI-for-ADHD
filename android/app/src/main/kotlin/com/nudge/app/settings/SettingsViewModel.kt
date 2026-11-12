@@ -19,12 +19,25 @@ class SettingsViewModel : ViewModel() {
     val notificationsEnabled: StateFlow<Boolean> =
         preferences.notificationsEnabled.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
 
+    val dynamicColor: StateFlow<Boolean> =
+        preferences.dynamicColor.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+
+    fun setDynamicColor(value: Boolean) {
+        viewModelScope.launch {
+            preferences.setDynamicColor(value)
+            ServiceLocator.refreshWidget()
+        }
+    }
+
     fun setRetainTranscript(value: Boolean) {
         viewModelScope.launch { preferences.setRetainTranscript(value) }
     }
 
     fun setLowBatteryMode(value: Boolean) {
-        viewModelScope.launch { preferences.setLowBatteryMode(value) }
+        viewModelScope.launch {
+            preferences.setLowBatteryMode(value)
+            ServiceLocator.refreshWidget() // the widget filters on this flag
+        }
     }
 
     // Max one push/day, off by default (M4) — flips the flag; the scheduling itself is a

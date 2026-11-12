@@ -2,5 +2,7 @@
 <resources>
     <!-- Low-saturation, calm neutral per PRD §6 palette guidance — a real launcher icon /
          brand palette is still a TODO, this is a placeholder so the app installs cleanly. -->
+    <!-- Mirrors CalmLight.primary in ui/theme/Theme.kt; keep the two in step. -->
+    <color name="brand_primary">#2E5F5A</color>
     <color name="launcher_background">#E6E4DF</color>
 </resources>

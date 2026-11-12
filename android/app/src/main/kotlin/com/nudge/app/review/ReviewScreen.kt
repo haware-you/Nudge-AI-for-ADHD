@@ -23,19 +23,19 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import com.nudge.app.R
+import com.nudge.app.ui.theme.Spacing
 import com.nudge.app.data.local.entities.TaskEntity
 
 @Composable
 fun ReviewScreen(viewModel: ReviewViewModel) {
     val tasks by viewModel.tasks.collectAsState()
 
-    Box(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+    Box(modifier = Modifier.fillMaxSize().padding(Spacing.lg)) {
         if (tasks.isEmpty()) {
             Text(stringResource(R.string.review_empty), modifier = Modifier.align(Alignment.Center))
         } else {
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            LazyColumn(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
                 items(tasks, key = { it.id }) { task ->
                     ReviewRow(
                         task = task,
@@ -51,7 +51,7 @@ fun ReviewScreen(viewModel: ReviewViewModel) {
 @Composable
 private fun ReviewRow(task: TaskEntity, onDelete: () -> Unit, onConfirm: () -> Unit) {
     Card(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier.padding(Spacing.lg)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -63,11 +63,12 @@ private fun ReviewRow(task: TaskEntity, onDelete: () -> Unit, onConfirm: () -> U
             }
             Text(
                 stringResource(R.string.review_source_label),
-                style = MaterialTheme.typography.bodySmall,
+                style = MaterialTheme.typography.bodyMedium, // PRD §6: 16sp floor, so not bodySmall
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             if (task.lowConfidence) {
-                OutlinedButton(onClick = onConfirm, modifier = Modifier.padding(top = 8.dp)) {
-                    Text(stringResource(R.string.review_low_confidence_badge))
+                OutlinedButton(onClick = onConfirm, modifier = Modifier.padding(top = Spacing.sm)) {
+                    Text(stringResource(R.string.review_confirm_action))
                 }
             }
         }

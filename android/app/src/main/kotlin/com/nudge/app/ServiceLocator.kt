@@ -6,6 +6,8 @@ import com.nudge.app.data.preferences.NudgePreferences
 import com.nudge.app.data.remote.SupabaseClientProvider
 import com.nudge.app.data.repository.CaptureRepository
 import com.nudge.app.data.repository.TaskRepository
+import com.nudge.app.widget.NextActionWidget
+import androidx.glance.appwidget.updateAll
 import io.github.jan.supabase.auth.auth
 
 /**
@@ -25,6 +27,11 @@ object ServiceLocator {
     val taskRepository: TaskRepository by lazy { TaskRepository(database.taskDao()) }
     val captureRepository: CaptureRepository by lazy {
         CaptureRepository(appContext, database.memoDao())
+    }
+
+    /** Re-render the home-screen widget after a setting it depends on has changed. */
+    suspend fun refreshWidget() {
+        NextActionWidget().updateAll(appContext)
     }
 
     /**
