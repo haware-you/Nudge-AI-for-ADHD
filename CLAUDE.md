@@ -48,6 +48,10 @@ unverified by a compiler.
 **UI conventions:** screens are built from `ui/components/NudgeComponents.kt` (header, card,
 round action button, pill bottom bar); spacing/sizes come from `ui/theme/Dimens.kt`, never
 inline `dp`. Widget text must go through `WidgetText` in `NextActionWidget.kt`.
+Motion and type follow the `apple-design` skill (`.agents/skills/apple-design`, installed from
+emilkowalski/skills): springs from `ui/theme/Motion.kt` (no bounce by default), press feedback
+via `Modifier.pressScale`, size-specific tracking in `ui/theme/Type.kt`. The skill is written for
+the web; only its principles are applied here, and the app remains Material 3 on Android.
 
 This document is derived from §4–§8 of the PRD per its own instruction (§12, "Development
 handoff"). Treat the PRD (`docs/prd.md`) as the source of truth; this file is a distilled,

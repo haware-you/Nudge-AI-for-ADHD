@@ -21,7 +21,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import com.nudge.app.R
-import com.nudge.app.ui.components.Overline
 import com.nudge.app.ui.theme.NudgeTheme
 import com.nudge.app.ui.theme.Sizing
 import com.nudge.app.ui.theme.Spacing
@@ -38,12 +37,11 @@ fun OnboardingScreen(onTryCapture: () -> Unit, onSkip: () -> Unit) {
     ) {
         // The placeholder brand mark: one dot, for "one next action".
         Box(modifier = Modifier.size(Sizing.stopButton).background(MaterialTheme.colorScheme.primary, CircleShape))
-        Overline(stringResource(R.string.app_name), modifier = Modifier.padding(top = Spacing.xl))
         Text(
             stringResource(R.string.onboarding_title),
             style = MaterialTheme.typography.headlineLarge,
             textAlign = TextAlign.Center,
-            modifier = Modifier.padding(top = Spacing.xs),
+            modifier = Modifier.padding(top = Spacing.xl),
         )
         Text(
             stringResource(R.string.onboarding_body),
@@ -61,7 +59,7 @@ fun OnboardingScreen(onTryCapture: () -> Unit, onSkip: () -> Unit) {
     }
 }
 
-@Preview(showBackground = true, backgroundColor = 0xFFF1EFE8, heightDp = 640)
+@Preview(showBackground = true, backgroundColor = 0xFFF2F3F1, heightDp = 640)
 @Composable
 private fun OnboardingPreview() {
     NudgeTheme { OnboardingScreen(onTryCapture = {}, onSkip = {}) }

@@ -18,7 +18,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.nudge.app.R
 import com.nudge.app.ui.components.NudgeCard
-import com.nudge.app.ui.components.Overline
 import com.nudge.app.ui.theme.NudgeTheme
 import com.nudge.app.ui.theme.Sizing
 import com.nudge.app.ui.theme.Spacing
@@ -42,7 +41,6 @@ fun WelcomeBackScreen(
         modifier = Modifier.fillMaxSize().safeDrawingPadding().padding(Spacing.xl),
         verticalArrangement = Arrangement.Center,
     ) {
-        Overline(stringResource(R.string.app_name))
         Text(stringResource(R.string.welcome_back_title), style = MaterialTheme.typography.headlineLarge)
 
         if (taskText != null) {
@@ -85,7 +83,7 @@ fun WelcomeBackScreen(
     }
 }
 
-@Preview(showBackground = true, backgroundColor = 0xFFF1EFE8, heightDp = 640)
+@Preview(showBackground = true, backgroundColor = 0xFFF2F3F1, heightDp = 640)
 @Composable
 private fun WelcomeBackPreview() {
     NudgeTheme {

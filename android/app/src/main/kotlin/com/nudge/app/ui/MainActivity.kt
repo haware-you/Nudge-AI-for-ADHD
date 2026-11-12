@@ -5,14 +5,16 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -21,7 +23,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.lifecycleScope
 import androidx.work.WorkManager
@@ -39,6 +44,7 @@ import com.nudge.app.sync.TaskActionSyncScheduler
 import com.nudge.app.ui.components.BottomBarItem
 import com.nudge.app.ui.components.NudgeBottomBar
 import com.nudge.app.ui.theme.NudgeTheme
+import com.nudge.app.ui.theme.Sizing
 import com.nudge.app.welcome.WelcomeBackScreen
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -142,32 +148,37 @@ class MainActivity : ComponentActivity() {
 private fun MainScaffold(reviewViewModel: ReviewViewModel, settingsViewModel: SettingsViewModel, onCapture: () -> Unit) {
     var tab by remember { mutableStateOf(Tab.REVIEW) }
 
-    Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
-        bottomBar = {
-            NudgeBottomBar(
-                listOf(
-                    BottomBarItem(
-                        label = stringResource(R.string.review_title),
-                        icon = Icons.AutoMirrored.Filled.List,
-                        selected = tab == Tab.REVIEW,
-                        onClick = { tab = Tab.REVIEW },
-                    ),
-                    BottomBarItem(
-                        label = stringResource(R.string.settings_title),
-                        icon = Icons.Filled.Settings,
-                        selected = tab == Tab.SETTINGS,
-                        onClick = { tab = Tab.SETTINGS },
-                    ),
-                ),
-            )
-        },
-    ) { padding ->
-        Box(modifier = Modifier.padding(padding)) {
-            when (tab) {
-                Tab.REVIEW -> ReviewScreen(reviewViewModel, onCapture = onCapture)
-                Tab.SETTINGS -> SettingsScreen(settingsViewModel)
-            }
+    val background = MaterialTheme.colorScheme.background
+    // No Scaffold bottomBar slot: the bar floats over the content so lists scroll under it.
+    Box(modifier = Modifier.fillMaxSize().statusBarsPadding()) {
+        when (tab) {
+            Tab.REVIEW -> ReviewScreen(reviewViewModel, onCapture = onCapture)
+            Tab.SETTINGS -> SettingsScreen(settingsViewModel)
         }
+        // Scroll-edge fade instead of a hard divider where content meets the floating bar.
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .height(Sizing.bottomBarClearance)
+                .background(Brush.verticalGradient(listOf(Color.Transparent, background))),
+        )
+        NudgeBottomBar(
+            items = listOf(
+                BottomBarItem(
+                    label = stringResource(R.string.review_title),
+                    icon = Icons.AutoMirrored.Filled.List,
+                    selected = tab == Tab.REVIEW,
+                    onClick = { tab = Tab.REVIEW },
+                ),
+                BottomBarItem(
+                    label = stringResource(R.string.settings_title),
+                    icon = Icons.Filled.Settings,
+                    selected = tab == Tab.SETTINGS,
+                    onClick = { tab = Tab.SETTINGS },
+                ),
+            ),
+            modifier = Modifier.align(Alignment.BottomCenter),
+        )
     }
 }

@@ -36,9 +36,11 @@ import com.nudge.app.data.local.entities.TaskEntity
 import com.nudge.app.data.local.entities.TaskStatus
 import com.nudge.app.ui.components.CircleActionButton
 import com.nudge.app.ui.components.NudgeCard
-import com.nudge.app.ui.components.Overline
+import com.nudge.app.ui.components.MetaLabel
 import com.nudge.app.ui.components.ScreenHeader
+import com.nudge.app.ui.components.rememberConfirmHaptic
 import com.nudge.app.ui.theme.NudgeTheme
+import com.nudge.app.ui.theme.Sizing
 import com.nudge.app.ui.theme.Spacing
 import kotlinx.coroutines.launch
 
@@ -80,7 +82,10 @@ fun ReviewScreen(viewModel: ReviewViewModel, onCapture: () -> Unit) {
                 }
             },
         )
-        SnackbarHost(snackbarHostState, modifier = Modifier.align(Alignment.BottomCenter))
+        SnackbarHost(
+            snackbarHostState,
+            modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = Sizing.bottomBarClearance),
+        )
     }
 }
 
@@ -93,7 +98,7 @@ private fun ReviewContent(
     onDelete: (TaskEntity) -> Unit,
 ) {
     Column(modifier = Modifier.fillMaxSize().padding(start = Spacing.lg, end = Spacing.lg, top = Spacing.lg)) {
-        ScreenHeader(overline = stringResource(R.string.app_name), title = stringResource(R.string.review_title)) {
+        ScreenHeader(title = stringResource(R.string.review_title)) {
             CircleActionButton(Icons.Filled.Mic, stringResource(R.string.capture_cta), onClick = onCapture)
         }
         if (tasks.isEmpty() && !hasStuckMemo) {
@@ -107,7 +112,8 @@ private fun ReviewContent(
         } else {
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(Spacing.sm),
-                contentPadding = PaddingValues(bottom = Spacing.lg),
+                // Last row scrolls clear of the floating bar; rows pass under it on the way.
+                contentPadding = PaddingValues(bottom = Sizing.bottomBarClearance),
             ) {
                 if (hasStuckMemo) {
                     item(key = "stuck-notice") {
@@ -130,17 +136,18 @@ private fun ReviewContent(
 
 @Composable
 private fun ReviewRow(task: TaskEntity, onDelete: () -> Unit, onConfirm: () -> Unit) {
+    val confirmHaptic = rememberConfirmHaptic()
     NudgeCard {
         Row(verticalAlignment = Alignment.Top) {
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
                 if (task.lowConfidence) {
                     // Low confidence is marked in words, not only by the outlined circle.
-                    Overline(stringResource(R.string.review_confirm_action), color = MaterialTheme.colorScheme.primary)
+                    MetaLabel(stringResource(R.string.review_confirm_action), color = MaterialTheme.colorScheme.primary)
                 }
                 Text(task.text, style = MaterialTheme.typography.titleMedium)
                 // M5 traceability: the verbatim words from the memo this task came from.
                 task.sourceSpan?.takeIf { it.isNotBlank() }?.let { span ->
-                    Overline(stringResource(R.string.review_source_label), modifier = Modifier.padding(top = Spacing.sm))
+                    MetaLabel(stringResource(R.string.review_source_label), modifier = Modifier.padding(top = Spacing.sm))
                     Text(
                         stringResource(R.string.review_source_quote, span),
                         style = MaterialTheme.typography.bodyMedium,
@@ -148,14 +155,14 @@ private fun ReviewRow(task: TaskEntity, onDelete: () -> Unit, onConfirm: () -> U
                     )
                 }
                 if (task.mergeCount > 0) {
-                    Overline(stringResource(R.string.review_merged_from_label), modifier = Modifier.padding(top = Spacing.sm))
+                    MetaLabel(stringResource(R.string.review_merged_from_label), modifier = Modifier.padding(top = Spacing.sm))
                 }
             }
             if (task.lowConfidence) {
                 CircleActionButton(
                     Icons.Filled.Check,
                     stringResource(R.string.review_confirm_action),
-                    onClick = onConfirm,
+                    onClick = { confirmHaptic(); onConfirm() },
                     filled = false,
                 )
             }
@@ -177,7 +184,7 @@ private fun previewTask(id: String, text: String, span: String?, lowConfidence: 
         createdAt = 0, updatedAt = 0, mergeCount = mergeCount,
     )
 
-@Preview(showBackground = true, backgroundColor = 0xFFF1EFE8, heightDp = 640)
+@Preview(showBackground = true, backgroundColor = 0xFFF2F3F1, heightDp = 640)
 @Composable
 private fun ReviewPreview() {
     NudgeTheme {
@@ -193,7 +200,7 @@ private fun ReviewPreview() {
     }
 }
 
-@Preview(showBackground = true, backgroundColor = 0xFFF1EFE8, heightDp = 400)
+@Preview(showBackground = true, backgroundColor = 0xFFF2F3F1, heightDp = 400)
 @Composable
 private fun ReviewEmptyPreview() {
     NudgeTheme {

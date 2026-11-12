@@ -9,7 +9,12 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
-import androidx.compose.foundation.BorderStroke
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -29,6 +34,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -37,7 +45,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.nudge.app.R
 import com.nudge.app.ServiceLocator
 import com.nudge.app.ui.components.CircleActionButton
-import com.nudge.app.ui.components.Overline
+import com.nudge.app.ui.components.rememberConfirmHaptic
+import com.nudge.app.ui.components.MetaLabel
+import com.nudge.app.ui.theme.NudgeMotion
 import com.nudge.app.ui.theme.NudgeTheme
 import com.nudge.app.ui.theme.Sizing
 import com.nudge.app.ui.theme.Spacing
@@ -97,12 +107,31 @@ private fun CaptureScreen(
     // an empty sheet.
     if (state == CaptureUiState.Idle) return
 
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
+    // The sheet rises from the bottom edge on a critically damped spring and the page dims
+    // behind it (a modal task). Recording has already started by now, so the motion never
+    // delays capture. The activity finishes itself when done, so only the entrance is animated.
+    var shown by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { shown = true }
+    val confirmHaptic = rememberConfirmHaptic()
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        AnimatedVisibility(visible = shown, enter = fadeIn(NudgeMotion.settle()), exit = fadeOut(NudgeMotion.settle())) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.scrim.copy(alpha = NudgeMotion.SCRIM_ALPHA)),
+            )
+        }
+        AnimatedVisibility(
+            visible = shown,
+            modifier = Modifier.align(Alignment.BottomCenter),
+            enter = slideInVertically(NudgeMotion.settle()) { it },
+            exit = slideOutVertically(NudgeMotion.settle()) { it }, // leaves the way it came
+        ) {
         Surface(
-            modifier = Modifier.navigationBarsPadding().padding(Spacing.xl).fillMaxWidth(),
+            modifier = Modifier.navigationBarsPadding().padding(Spacing.md).fillMaxWidth(),
             shape = MaterialTheme.shapes.extraLarge,
             color = MaterialTheme.colorScheme.surfaceContainerLowest,
-            border = BorderStroke(Sizing.border, MaterialTheme.colorScheme.outlineVariant),
         ) {
             Column(
                 modifier = Modifier.padding(Spacing.xl),
@@ -111,7 +140,7 @@ private fun CaptureScreen(
             ) {
                 when (state) {
                     is CaptureUiState.Recording -> {
-                        Overline(stringResource(R.string.capture_recording))
+                        MetaLabel(stringResource(R.string.capture_recording))
                         // Elapsed time is plain feedback that the mic is live; digits, not copy.
                         Text(
                             "%d:%02d".format(state.elapsedSeconds / 60, state.elapsedSeconds % 60),
@@ -127,7 +156,7 @@ private fun CaptureScreen(
                         CircleActionButton(
                             icon = Icons.Filled.Stop,
                             contentDescription = stringResource(R.string.capture_tap_to_stop),
-                            onClick = onStop,
+                            onClick = { confirmHaptic(); onStop() },
                             size = Sizing.stopButton,
                         )
                         Text(
@@ -163,22 +192,23 @@ private fun CaptureScreen(
                 }
             }
         }
+        }
     }
 }
 
-@Preview(showBackground = true, backgroundColor = 0xFFF1EFE8, heightDp = 360)
+@Preview(showBackground = true, backgroundColor = 0xFFF2F3F1, heightDp = 360)
 @Composable
 private fun CaptureRecordingPreview() {
     NudgeTheme { CaptureScreen(CaptureUiState.Recording(42, showCutoffWarning = false), onStop = {}, onOpenSettings = {}) }
 }
 
-@Preview(showBackground = true, backgroundColor = 0xFFF1EFE8, heightDp = 200)
+@Preview(showBackground = true, backgroundColor = 0xFFF2F3F1, heightDp = 200)
 @Composable
 private fun CaptureProcessingPreview() {
     NudgeTheme { CaptureScreen(CaptureUiState.Processing, onStop = {}, onOpenSettings = {}) }
 }
 
-@Preview(showBackground = true, backgroundColor = 0xFFF1EFE8, heightDp = 320)
+@Preview(showBackground = true, backgroundColor = 0xFFF2F3F1, heightDp = 320)
 @Composable
 private fun CapturePermissionDeniedPreview() {
     NudgeTheme { CaptureScreen(CaptureUiState.PermissionDenied, onStop = {}, onOpenSettings = {}) }

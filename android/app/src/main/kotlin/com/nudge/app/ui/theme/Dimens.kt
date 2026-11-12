@@ -20,8 +20,10 @@ object Sizing {
     val bottomBarItemHeight = 56.dp
     val stopButton = 72.dp
     val widgetIcon = 20.dp
-    val border = 1.dp
     val borderStrong = 1.5.dp
+    val hairline = 0.5.dp
+    /** Space scrolling content leaves at the bottom so its last item clears the floating bar. */
+    val bottomBarClearance = 104.dp
 }
 
 /**

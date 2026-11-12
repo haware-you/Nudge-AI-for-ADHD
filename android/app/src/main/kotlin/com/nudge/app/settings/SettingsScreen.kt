@@ -101,14 +101,15 @@ private fun SettingsContent(items: List<SettingItem>, deleteFailed: Boolean, onD
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(Spacing.lg),
+            .padding(start = Spacing.lg, end = Spacing.lg, top = Spacing.lg, bottom = Sizing.bottomBarClearance),
     ) {
-        ScreenHeader(overline = stringResource(R.string.app_name), title = stringResource(R.string.settings_title))
+        ScreenHeader(title = stringResource(R.string.settings_title))
         NudgeCard {
             items.forEachIndexed { index, item ->
                 if (index > 0) {
                     HorizontalDivider(
                         modifier = Modifier.padding(vertical = Spacing.md),
+                        thickness = Sizing.hairline,
                         color = MaterialTheme.colorScheme.outlineVariant,
                     )
                 }
@@ -170,7 +171,7 @@ private fun SettingRow(item: SettingItem) {
     }
 }
 
-@Preview(showBackground = true, backgroundColor = 0xFFF1EFE8, heightDp = 640)
+@Preview(showBackground = true, backgroundColor = 0xFFF2F3F1, heightDp = 640)
 @Composable
 private fun SettingsPreview() {
     NudgeTheme {
