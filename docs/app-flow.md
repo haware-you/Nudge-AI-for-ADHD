@@ -345,7 +345,7 @@ to sync to the `profiles` table.
 | Mic permission denied | Clear recovery screen | Yes: message + Open settings |
 | Call during recording | Partial audio saved and processed | Yes (audio-focus loss) |
 | Offline when capturing | Saved, uploads later | Yes (Room + WorkManager) |
-| App killed / phone rebooted | Nothing lost | Yes in design: re-queued on next app start. Unverified |
+| App killed / phone rebooted | Nothing lost | Mostly: WorkManager keeps its own queue, and app start re-queues `PENDING`/`FAILED` memos. A memo killed mid-upload stays `UPLOADING`, which the app-start re-queue skips; it relies on WorkManager alone. Unverified |
 | Upload fails 3 times | "Stuck", user told once, audio kept | Marked stuck; **no notice**; retries likely can't succeed (§4) |
 | Model output invalid | Transcript kept as a note | Yes |
 | Venting only | Note + acknowledgement | Note only |
