@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.nudge.app.data.remote.SupabaseClientProvider
 import io.github.jan.supabase.auth.auth
@@ -27,6 +28,7 @@ class NudgePreferences(private val context: Context) {
         val NOTIFICATION_HOUR = intPreferencesKey("notification_hour")
         val ONBOARDING_COMPLETE = booleanPreferencesKey("onboarding_complete")
         val DYNAMIC_COLOR = booleanPreferencesKey("dynamic_color")
+        val LAST_OPENED_AT = longPreferencesKey("last_opened_at")
     }
 
     val onboardingComplete: Flow<Boolean> =
@@ -35,6 +37,18 @@ class NudgePreferences(private val context: Context) {
     /** Local-only, never synced — onboarding is a per-device first-run gate, not account state. */
     suspend fun setOnboardingComplete(value: Boolean) {
         context.dataStore.edit { it[Keys.ONBOARDING_COMPLETE] = value }
+    }
+
+    /** Epoch millis of the previous app open, or null on first run. Drives the welcome-back screen. */
+    val lastOpenedAt: Flow<Long?> = context.dataStore.data.map { it[Keys.LAST_OPENED_AT] }
+
+    suspend fun setLastOpenedAt(value: Long) {
+        context.dataStore.edit { it[Keys.LAST_OPENED_AT] = value }
+    }
+
+    /** Part of account deletion: forget every local setting. */
+    suspend fun clearAll() {
+        context.dataStore.edit { it.clear() }
     }
 
     /** Off by default: the calm palette is the product's look; wallpaper colors are opt-in. */

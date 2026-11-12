@@ -3,9 +3,12 @@ package com.nudge.app.widget
 import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.TextUnit
+import androidx.glance.ColorFilter
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.GlanceTheme
+import androidx.glance.Image
+import androidx.glance.ImageProvider
 import androidx.glance.LocalContext
 import androidx.glance.action.Action
 import androidx.glance.action.ActionParameters
@@ -26,6 +29,7 @@ import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.height
 import androidx.glance.layout.padding
+import androidx.glance.layout.size
 import androidx.glance.layout.width
 import androidx.glance.material3.ColorProviders
 import androidx.glance.text.FontWeight
@@ -79,16 +83,21 @@ class NextActionWidget : GlanceAppWidget() {
 
 @Composable
 private fun NextActionContent(task: TaskEntity?, hasAnyOpenTask: Boolean, lowBatteryMode: Boolean) {
+    // Card layout, top to bottom: [low battery toggle | capture], the one task, [Done | Not today].
     Column(
         modifier = GlanceModifier
             .fillMaxSize()
-            .background(GlanceTheme.colors.background)
+            .background(GlanceTheme.colors.surface)
             .cornerRadius(Sizing.widgetCornerRadius)
-            .padding(horizontal = Spacing.lg, vertical = Spacing.sm),
+            .padding(Spacing.md),
     ) {
-        // The state area takes whatever height is left after the fixed 48dp rows below it.
+        Row(modifier = GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Box(modifier = GlanceModifier.defaultWeight()) { LowBatteryToggle(lowBatteryMode) }
+            CaptureButton()
+        }
+        // The state area takes whatever height is left between the two fixed 48dp rows.
         Box(
-            modifier = GlanceModifier.fillMaxWidth().defaultWeight(),
+            modifier = GlanceModifier.fillMaxWidth().defaultWeight().padding(horizontal = Spacing.xs),
             contentAlignment = Alignment.CenterStart,
         ) {
             when {
@@ -98,26 +107,63 @@ private fun NextActionContent(task: TaskEntity?, hasAnyOpenTask: Boolean, lowBat
             }
         }
         if (task != null) TaskActions(task)
-        LowBatteryToggleRow(lowBatteryMode)
     }
 }
 
 @Composable
 private fun TaskActions(task: TaskEntity) {
     val context = LocalContext.current
-    Row(modifier = GlanceModifier.fillMaxWidth()) {
-        WidgetAction(
-            label = context.getString(R.string.widget_action_done),
-            color = GlanceTheme.colors.primary,
-            weight = FontWeight.Bold,
-            action = actionRunCallback<DoneActionCallback>(actionParametersOf(TaskIdKey to task.id)),
-        )
-        Spacer(modifier = GlanceModifier.width(Spacing.lg))
+    Row(modifier = GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        // Done: filled pill with a check, the one visually primary action on the widget.
+        Row(
+            modifier = GlanceModifier
+                .height(Sizing.minTouchTarget)
+                .background(GlanceTheme.colors.primary)
+                .cornerRadius(Sizing.widgetCornerRadius)
+                .clickable(actionRunCallback<DoneActionCallback>(actionParametersOf(TaskIdKey to task.id)))
+                .padding(horizontal = Spacing.lg),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Image(
+                provider = ImageProvider(R.drawable.ic_check),
+                contentDescription = null,
+                modifier = GlanceModifier.size(Sizing.widgetIcon),
+                colorFilter = ColorFilter.tint(GlanceTheme.colors.onPrimary),
+            )
+            Spacer(modifier = GlanceModifier.width(Spacing.sm))
+            WidgetText(
+                context.getString(R.string.widget_action_done),
+                color = GlanceTheme.colors.onPrimary,
+                weight = FontWeight.Medium,
+                maxLines = 1,
+            )
+        }
+        Spacer(modifier = GlanceModifier.width(Spacing.sm))
         WidgetAction(
             label = context.getString(R.string.widget_action_not_today),
             color = GlanceTheme.colors.onSurfaceVariant,
-            weight = FontWeight.Normal,
             action = actionRunCallback<SkipActionCallback>(actionParametersOf(TaskIdKey to task.id)),
+        )
+    }
+}
+
+/** Always present, so capture is one tap away whatever the widget is showing (M1). */
+@Composable
+private fun CaptureButton() {
+    val context = LocalContext.current
+    Box(
+        modifier = GlanceModifier
+            .size(Sizing.minTouchTarget)
+            .background(GlanceTheme.colors.primaryContainer)
+            .cornerRadius(Sizing.widgetCornerRadius)
+            .clickable(actionStartActivity<CaptureActivity>()),
+        contentAlignment = Alignment.Center,
+    ) {
+        Image(
+            provider = ImageProvider(R.drawable.ic_mic),
+            contentDescription = context.getString(R.string.capture_cta),
+            modifier = GlanceModifier.size(Sizing.widgetIcon),
+            colorFilter = ColorFilter.tint(GlanceTheme.colors.onPrimaryContainer),
         )
     }
 }
@@ -125,9 +171,9 @@ private fun TaskActions(task: TaskEntity) {
 @Composable
 private fun EmptyState() {
     val context = LocalContext.current
-    // The whole state is the tap target, not just the body line.
+    // The whole state is a tap target for capture, as well as the mic button.
     Column(modifier = GlanceModifier.fillMaxSize().clickable(actionStartActivity<CaptureActivity>())) {
-        WidgetText(context.getString(R.string.widget_empty_state_title), weight = FontWeight.Medium)
+        WidgetText(context.getString(R.string.widget_empty_state_title), size = WidgetType.task, weight = FontWeight.Medium)
         WidgetText(context.getString(R.string.widget_empty_state_body), color = GlanceTheme.colors.onSurfaceVariant)
     }
 }
@@ -138,35 +184,34 @@ private fun LowBatteryEmptyState() {
     // means "there IS work, just not light work right now."
     val context = LocalContext.current
     Column {
-        WidgetText(context.getString(R.string.widget_low_battery_empty_title), weight = FontWeight.Medium)
+        WidgetText(context.getString(R.string.widget_low_battery_empty_title), size = WidgetType.task, weight = FontWeight.Medium)
         WidgetText(context.getString(R.string.widget_low_battery_empty_body), color = GlanceTheme.colors.onSurfaceVariant)
     }
 }
 
 @Composable
-private fun LowBatteryToggleRow(lowBatteryMode: Boolean) {
+private fun LowBatteryToggle(lowBatteryMode: Boolean) {
     val context = LocalContext.current
     WidgetAction(
         label = context.getString(
             if (lowBatteryMode) R.string.widget_low_battery_on else R.string.settings_low_battery_mode,
         ),
         color = GlanceTheme.colors.onSurfaceVariant,
-        weight = FontWeight.Normal,
         action = actionRunCallback<ToggleLowBatteryActionCallback>(),
     )
 }
 
 /** A text action with a touch target of at least 48dp in height. */
 @Composable
-private fun WidgetAction(label: String, color: ColorProvider, weight: FontWeight, action: Action) {
+private fun WidgetAction(label: String, color: ColorProvider, action: Action) {
     Box(
         modifier = GlanceModifier
             .height(Sizing.minTouchTarget)
             .clickable(action)
-            .padding(horizontal = Spacing.sm),
+            .padding(horizontal = Spacing.xs),
         contentAlignment = Alignment.CenterStart,
     ) {
-        WidgetText(label, color = color, weight = weight, maxLines = 1)
+        WidgetText(label, color = color, maxLines = 1)
     }
 }
 
@@ -174,7 +219,7 @@ private fun WidgetAction(label: String, color: ColorProvider, weight: FontWeight
 @Composable
 private fun WidgetText(
     text: String,
-    color: ColorProvider = GlanceTheme.colors.onBackground,
+    color: ColorProvider = GlanceTheme.colors.onSurface,
     size: TextUnit = WidgetType.body,
     weight: FontWeight = FontWeight.Normal,
     maxLines: Int = Int.MAX_VALUE,

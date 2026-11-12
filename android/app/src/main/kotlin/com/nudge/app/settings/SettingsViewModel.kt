@@ -29,6 +29,13 @@ class SettingsViewModel : ViewModel() {
         }
     }
 
+    /** [onResult] gets true once everything is gone, false if the server purge did not go through. */
+    fun deleteAccount(onResult: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            onResult(runCatching { ServiceLocator.deleteAccount() }.isSuccess)
+        }
+    }
+
     fun setRetainTranscript(value: Boolean) {
         viewModelScope.launch { preferences.setRetainTranscript(value) }
     }

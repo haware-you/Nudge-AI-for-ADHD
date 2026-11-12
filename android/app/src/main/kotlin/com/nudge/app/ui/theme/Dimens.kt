@@ -13,14 +13,15 @@ object Spacing {
     val xxl = 32.dp
 }
 
-object Elevation {
-    val overlay = 6.dp
-}
-
 object Sizing {
     /** PRD §6: touch targets >= 48 dp. */
     val minTouchTarget = 48.dp
     val widgetCornerRadius = 24.dp
+    val bottomBarItemHeight = 56.dp
+    val stopButton = 72.dp
+    val widgetIcon = 20.dp
+    val border = 1.dp
+    val borderStrong = 1.5.dp
 }
 
 /**

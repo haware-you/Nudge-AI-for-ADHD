@@ -7,6 +7,7 @@ import com.nudge.app.ServiceLocator
 import com.nudge.app.data.local.entities.TaskEntity
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -20,8 +21,22 @@ class ReviewViewModel : ViewModel() {
     val tasks: StateFlow<List<TaskEntity>> = taskRepository.observeReviewList()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
-    fun delete(taskId: String) {
-        viewModelScope.launch { taskRepository.deleteTask(taskId) }
+    // PRD M1: after 3 failed uploads a memo is "stuck" and the user is told once, calmly.
+    val hasStuckMemo: StateFlow<Boolean> = ServiceLocator.database.memoDao().observeStuckMemos()
+        .map { it.isNotEmpty() }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+
+    /** Removes the row at once; follow with [undoDelete] or [commitDelete]. */
+    fun delete(task: TaskEntity) {
+        viewModelScope.launch { taskRepository.deleteTaskLocally(task.id) }
+    }
+
+    fun undoDelete(task: TaskEntity) {
+        viewModelScope.launch { taskRepository.restoreTask(task) }
+    }
+
+    fun commitDelete(taskId: String) {
+        viewModelScope.launch { taskRepository.deleteTaskRemotely(taskId) }
     }
 
     fun confirm(task: TaskEntity) {

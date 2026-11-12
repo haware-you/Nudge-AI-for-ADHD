@@ -21,6 +21,12 @@ data class TaskDto(
     @SerialName("updated_at") val updatedAt: String,
 )
 
+// One row of `dedup_merges`; only the column the client needs.
+@Serializable
+data class DedupMergeDto(
+    @SerialName("surviving_task_id") val survivingTaskId: String,
+)
+
 @Serializable
 data class TaskStatusUpdate(
     val status: String,

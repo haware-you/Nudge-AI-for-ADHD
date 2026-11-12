@@ -30,15 +30,24 @@ unverified by a compiler.
    real STT/Anthropic/Voyage API keys, and run the PRD's own Week 1 exit criteria: process ~15
    real rambling memos (EN + mixed EN/ID) and subjectively check extraction quality and
    per-memo cost before building anything further on top of it.
-3. Dedup-merge visibility in the Review screen (M2: "merge visible in review history") isn't
-   wired up yet — `dedup_merges` exists server-side but nothing on the client reads it.
+3. Dedup-merge visibility in the Review screen (M2: "merge visible in review history") is wired
+   client-side (`TaskRepository.syncDown` counts `dedup_merges` rows into `TaskEntity.mergeCount`)
+   but, like everything else here, has never run against a real project.
 4. Instrumented tests for the M1 edge cases (permission-denied, offline queue, call
    interruption) don't exist yet — only the one pure-logic unit test above does.
 5. The daily notification (M4: "max one push/day, off by default") has a toggle in Settings but
    no actual scheduling behind it yet.
 6. `usage_daily.estimated_cost_usd` is never populated — the COGS KPI has no real numbers behind
    it until token/second-based cost accounting is added to `process-memo`.
-7. No real app icon/brand palette — placeholder shapes and a neutral color only.
+7. No real app icon/brand palette — a placeholder dot mark and a placeholder olive/paper
+   palette (`ui/theme/Theme.kt`). Wallpaper dynamic color is opt-in in Settings.
+8. Account deletion needs the `delete-account` Edge Function deployed alongside `process-memo`.
+9. The welcome-back screen (shown after 7+ days away, `welcome/WelcomeBackScreen.kt`) is Open
+   Decision 1's unvalidated bet; its trigger and content are provisional.
+
+**UI conventions:** screens are built from `ui/components/NudgeComponents.kt` (header, card,
+round action button, pill bottom bar); spacing/sizes come from `ui/theme/Dimens.kt`, never
+inline `dp`. Widget text must go through `WidgetText` in `NextActionWidget.kt`.
 
 This document is derived from §4–§8 of the PRD per its own instruction (§12, "Development
 handoff"). Treat the PRD (`docs/prd.md`) as the source of truth; this file is a distilled,

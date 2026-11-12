@@ -6,6 +6,7 @@ import com.nudge.app.data.local.entities.Effort
 import com.nudge.app.data.local.entities.TaskEntity
 import com.nudge.app.data.local.entities.TaskStatus
 import com.nudge.app.data.remote.SupabaseClientProvider
+import com.nudge.app.data.remote.dto.DedupMergeDto
 import com.nudge.app.data.remote.dto.TaskDto
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
@@ -53,10 +54,25 @@ class TaskRepository(private val taskDao: TaskDao) {
         taskDao.update(task.copy(lowConfidence = false, pendingSync = true))
     }
 
-    suspend fun deleteTask(taskId: String) {
+    /**
+     * Review delete is two-step so it can be undone: the row disappears locally at once
+     * (PRD M5: "deletion is instant and unceremonious"), and the server delete only happens
+     * once the undo window has passed. If the app dies in between, the task comes back on the
+     * next [syncDown] — the safe direction to fail in.
+     */
+    suspend fun deleteTaskLocally(taskId: String) {
         taskDao.delete(taskId)
-        SupabaseClientProvider.client.postgrest.from("tasks").delete {
-            filter { eq("id", taskId) }
+    }
+
+    suspend fun restoreTask(task: TaskEntity) {
+        taskDao.upsertAll(listOf(task))
+    }
+
+    suspend fun deleteTaskRemotely(taskId: String) {
+        runCatching {
+            SupabaseClientProvider.client.postgrest.from("tasks").delete {
+                filter { eq("id", taskId) }
+            }
         }
     }
 
@@ -68,7 +84,17 @@ class TaskRepository(private val taskDao: TaskDao) {
             }
             .decodeList<TaskDto>()
 
-        taskDao.upsertAll(remoteTasks.map { it.toEntity() })
+        // RLS limits this to the signed-in user's rows. A failure here only loses the "merged"
+        // label, so it must not fail the whole sync.
+        val mergeCounts = runCatching {
+            SupabaseClientProvider.client.postgrest.from("dedup_merges")
+                .select(columns = Columns.list("surviving_task_id"))
+                .decodeList<DedupMergeDto>()
+                .groupingBy { it.survivingTaskId }
+                .eachCount()
+        }.getOrDefault(emptyMap())
+
+        taskDao.upsertAll(remoteTasks.map { it.toEntity(mergeCount = mergeCounts[it.id] ?: 0) })
     }
 
     /** Flushes any locally-applied Done/Skip actions that haven't reached the server yet. */
@@ -94,7 +120,7 @@ class TaskRepository(private val taskDao: TaskDao) {
     }
 }
 
-private fun TaskDto.toEntity(): TaskEntity = TaskEntity(
+private fun TaskDto.toEntity(mergeCount: Int): TaskEntity = TaskEntity(
     id = id,
     sourceMemoId = sourceMemoId,
     text = text,
@@ -108,4 +134,5 @@ private fun TaskDto.toEntity(): TaskEntity = TaskEntity(
     createdAt = Instant.parse(createdAt).toEpochMilliseconds(),
     updatedAt = Instant.parse(updatedAt).toEpochMilliseconds(),
     pendingSync = false,
+    mergeCount = mergeCount,
 )

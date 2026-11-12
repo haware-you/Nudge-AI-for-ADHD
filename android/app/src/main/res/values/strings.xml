@@ -16,9 +16,9 @@
     <string name="widget_low_battery_empty_title">Nothing light left</string>
     <string name="widget_low_battery_empty_body">Rest counts.</string>
     <string name="widget_low_battery_on">Low battery mode • on</string>
-    <string name="widget_capture_cta">Capture</string>
 
     <!-- Capture flow (M1) -->
+    <string name="capture_cta">Capture</string>
     <string name="capture_recording">Listening</string>
     <string name="capture_tap_to_stop">Tap to stop</string>
     <string name="capture_processing">Captured — still thinking</string>
@@ -34,11 +34,15 @@
     <string name="review_confirm_action">Confirm this one</string>
     <string name="review_source_label">From this memo</string>
     <string name="review_delete_action">Delete</string>
+    <string name="review_deleted">Removed</string>
+    <string name="review_undo">Undo</string>
+    <string name="review_source_quote">“%1$s”</string>
     <string name="review_merged_from_label">Merged with an earlier memo</string>
 
     <!-- Return-after-absence (M4 / Open Decision 1) -->
     <string name="welcome_back_title">Welcome back</string>
     <string name="welcome_back_body">Here\'s one thing, whenever you\'re ready.</string>
+    <string name="welcome_back_continue">Open Nudge</string>
 
     <!-- Onboarding -->
     <string name="onboarding_title">Speak it and forget it</string>
@@ -57,4 +61,8 @@
     <string name="settings_notifications">Daily reminder</string>
     <string name="settings_notifications_body">At most one a day. Off by default.</string>
     <string name="settings_delete_account">Delete account</string>
+    <string name="settings_delete_account_body">This removes your memos, tasks and account from this phone and from our servers. It can\'t be undone.</string>
+    <string name="settings_delete_account_confirm">Delete everything</string>
+    <string name="settings_delete_account_failed">That didn\'t go through, so nothing was deleted. It needs a connection.</string>
+    <string name="settings_cancel">Cancel</string>
 </resources>

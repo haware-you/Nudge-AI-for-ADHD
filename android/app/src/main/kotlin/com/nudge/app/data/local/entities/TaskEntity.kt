@@ -32,4 +32,7 @@ data class TaskEntity(
     // True once a Done/Skip action has been applied optimistically here but not yet confirmed
     // synced to Supabase. TaskActionSyncWorker flushes rows where this is true.
     val pendingSync: Boolean = false,
+    // How many near-duplicate mentions the server merged into this task (dedup_merges rows).
+    // Display-only, for M2's "merge visible in review history".
+    val mergeCount: Int = 0,
 )
