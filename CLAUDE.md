@@ -47,6 +47,9 @@ unverified by a compiler.
    failures.
 7. No real app icon/brand palette — placeholder shapes and a neutral color only.
 
+`docs/app-flow.md` traces each user flow (spec vs. what the code does) and ranks the gaps
+found; check it before touching a flow.
+
 This document is derived from §4–§8 of the PRD per its own instruction (§12, "Development
 handoff"). Treat the PRD (`docs/prd.md`) as the source of truth; this file is a distilled,
 implementation-facing summary of its constraints. If the two ever disagree, defer to the PRD
